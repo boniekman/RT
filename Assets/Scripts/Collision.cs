@@ -1,39 +1,67 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Collision : MonoBehaviour
 {
     [SerializeField] float loadDelay = 1f;
     [SerializeField] AudioClip crash;
     [SerializeField] AudioClip success;
+    [SerializeField] ParticleSystem crashParticles;
+    [SerializeField] ParticleSystem successParticles;
+    [SerializeField] Text collisionOFF;
 
     AudioSource audioSource;
 
-    bool isTransitioning = false;
+    bool isTransitioning;
+    bool isCollisionPossible;
 
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
+        isTransitioning = false;
+        isCollisionPossible = true;
+        collisionOFF.enabled = false;
     }
+    private void Update()
+    {
+        DebugCheats();
+    }
+
+    private void DebugCheats()
+    {
+        if (Input.GetKeyUp(KeyCode.L))
+        {
+            NextLevel();
+        }
+        if (Input.GetKeyUp(KeyCode.C))
+        {
+            isCollisionPossible = !isCollisionPossible; // toggle
+            collisionOFF.enabled = !collisionOFF.enabled;
+        }
+    }
+
     private void OnCollisionEnter(UnityEngine.Collision collision)
     {
-        if (!isTransitioning)
+        if (isCollisionPossible)
         {
-            switch (collision.gameObject.tag)
+            if (!isTransitioning)
             {
-                case "Finish":
-                    FinishSequence();
-                    break;
-                case "Respawn":
-                    Debug.Log("Begin ignition");
-                    break;
-                default:
-                    CrashSequence();
-                    break;
+                switch (collision.gameObject.tag)
+                {
+                    case "Finish":
+                        FinishSequence();
+                        break;
+                    case "Respawn":
+                        Debug.Log("Begin ignition");
+                        break;
+                    default:
+                        CrashSequence();
+                        break;
+                }
             }
         }
-            
-            
     }
     void FinishSequence()
     {
@@ -41,7 +69,7 @@ public class Collision : MonoBehaviour
         isTransitioning = true;
         audioSource.Stop();
         audioSource.PlayOneShot(success);
-        //todo animation
+        successParticles.Play();
         GetComponent<Movement>().enabled = false;
         Invoke("NextLevel", loadDelay);
 
@@ -51,7 +79,7 @@ public class Collision : MonoBehaviour
         isTransitioning = true;
         audioSource.Stop();
         audioSource.PlayOneShot(crash);
-        //todo animation
+        crashParticles.Play();
         GetComponent<Movement>().enabled = false;
         Invoke("ReloadLevel", loadDelay);
 
@@ -75,4 +103,6 @@ public class Collision : MonoBehaviour
             SceneManager.LoadScene(currentSceneIndex + 1);
         }
     }
+
+
 }
